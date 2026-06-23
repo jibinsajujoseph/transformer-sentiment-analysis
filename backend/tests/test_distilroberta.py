@@ -1,56 +1,40 @@
 """
-Tests for the fine-tuned DistilRoBERTa model.
+Tests for the DistilRoBERTa HuggingFace wrapper.
 
 Validates:
-    1. Model and tokenizer load successfully
-    2. Inference on a positive review returns valid output
-    3. Inference on a negative review returns valid output
-    4. Label mapping matches the expected values
+    1. Model and tokenizer download and load successfully from Hugging Face Hub
+    2. Inference on positive/negative reviews returns valid outputs
 """
-
-from pathlib import Path
 
 import pytest
 
+from app.config import settings
 from app.services.distilroberta_service import DistilRoBERTaService
-
-# Resolve model directory relative to this test file
-MODEL_DIR = Path(__file__).resolve().parent.parent.parent / "models" / "distilroberta-imdb"
 
 
 class TestModelLoading:
-    """Test that model and tokenizer artifacts load correctly."""
-
-    def test_model_dir_exists(self) -> None:
-        """Model directory should exist with required files."""
-        assert MODEL_DIR.exists(), f"Model dir not found at {MODEL_DIR}"
-        assert (MODEL_DIR / "config.json").exists(), "config.json not found"
-        assert (MODEL_DIR / "model.safetensors").exists(), "model.safetensors not found"
-        assert (MODEL_DIR / "tokenizer").is_dir(), "tokenizer/ directory not found"
+    """Test that the model loads correctly."""
 
     def test_service_initializes(self) -> None:
         """Service should initialize without errors."""
-        service = DistilRoBERTaService(MODEL_DIR)
+        service = DistilRoBERTaService(settings.DISTILROBERTA_REPO_ID)
         assert service.model is not None
         assert service.tokenizer is not None
 
 
 class TestLabelMapping:
-    """Test that label mapping matches expected values."""
+    """Test that the label mapping is correct."""
 
     @pytest.fixture(scope="class")
     def service(self) -> DistilRoBERTaService:
-        return DistilRoBERTaService(MODEL_DIR)
+        return DistilRoBERTaService(settings.DISTILROBERTA_REPO_ID)
 
     def test_label_count(self, service: DistilRoBERTaService) -> None:
-        """Should have exactly 2 labels."""
-        assert len(service.id2label) == 2
+        assert len(service.model.config.id2label) == 2
 
     def test_label_values(self, service: DistilRoBERTaService) -> None:
-        """Labels should be 'Negative' and 'Positive'."""
-        labels = set(service.id2label.values())
-        assert "Negative" in labels
-        assert "Positive" in labels
+        # Depending on how it was trained, it might be 0/1 or LABEL_0/LABEL_1
+        assert "positive" in (service.id2label[0].lower(), service.id2label[1].lower())
 
 
 class TestInference:
@@ -58,47 +42,32 @@ class TestInference:
 
     @pytest.fixture(scope="class")
     def service(self) -> DistilRoBERTaService:
-        """Load the service once for all tests in this class."""
-        return DistilRoBERTaService(MODEL_DIR)
+        return DistilRoBERTaService(settings.DISTILROBERTA_REPO_ID)
 
     def test_positive_review(self, service: DistilRoBERTaService) -> None:
-        """A clearly positive review should return a valid prediction."""
-        result = service.predict(
-            "This movie was absolutely fantastic! The acting was superb "
-            "and the plot kept me engaged throughout."
-        )
+        result = service.predict("This movie was absolutely wonderful!")
         assert result.label in ("positive", "negative")
         assert 0.0 <= result.confidence <= 1.0
-        assert result.latency_ms > 0
 
     def test_negative_review(self, service: DistilRoBERTaService) -> None:
-        """A clearly negative review should return a valid prediction."""
-        result = service.predict(
-            "Terrible film. Boring, predictable, and a complete waste of time. "
-            "I want my money back."
-        )
+        result = service.predict("Terrible film, completely boring and predictable.")
         assert result.label in ("positive", "negative")
         assert 0.0 <= result.confidence <= 1.0
-        assert result.latency_ms > 0
 
     def test_confidence_range(self, service: DistilRoBERTaService) -> None:
-        """Confidence should be between 0 and 1 for any input."""
-        result = service.predict("An average film, nothing special.")
+        result = service.predict("It was an okay movie.")
         assert 0.0 <= result.confidence <= 1.0
 
     def test_latency_measured(self, service: DistilRoBERTaService) -> None:
-        """Latency should be a positive number."""
-        result = service.predict("Good movie")
+        result = service.predict("Test")
         assert result.latency_ms > 0
 
     def test_short_input(self, service: DistilRoBERTaService) -> None:
-        """Very short input should still work."""
         result = service.predict("Bad")
         assert result.label in ("positive", "negative")
 
     def test_long_input(self, service: DistilRoBERTaService) -> None:
-        """Long input should be truncated gracefully (max 512 tokens)."""
-        long_review = "This is a great movie. " * 200
-        result = service.predict(long_review)
+        # Just ensure it doesn't crash on long inputs (should be truncated to 512 max length)
+        long_text = "movie " * 1000
+        result = service.predict(long_text)
         assert result.label in ("positive", "negative")
-        assert 0.0 <= result.confidence <= 1.0

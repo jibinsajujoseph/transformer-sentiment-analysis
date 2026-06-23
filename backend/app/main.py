@@ -14,40 +14,26 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
-from app.services.distilroberta_service import DistilRoBERTaService
-from app.services.scratch_service import ScratchTransformerService
+from app.services.model_manager import ModelManager
 
 logger = logging.getLogger(__name__)
 
-# ── Model services (initialized at startup) ──────────────────────────────────
-scratch_service: ScratchTransformerService | None = None
-distilroberta_service: DistilRoBERTaService | None = None
-
-# ── Model paths ──────────────────────────────────────────────────────────────
-# Resolve relative to the project root (one level above backend/)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-SCRATCH_MODEL_DIR = PROJECT_ROOT / "models" / "scratch-transformer"
-DISTILROBERTA_MODEL_DIR = PROJECT_ROOT / "models" / "distilroberta-imdb"
+# ── Model manager (initialized at startup) ──────────────────────────────────
+model_manager: ModelManager | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Load both models into memory at startup, clean up on shutdown."""
-    global scratch_service, distilroberta_service
+    global model_manager
 
-    logger.info("Loading scratch Transformer from %s ...", SCRATCH_MODEL_DIR)
-    scratch_service = ScratchTransformerService(SCRATCH_MODEL_DIR)
-    logger.info("Scratch Transformer loaded successfully.")
-
-    logger.info("Loading DistilRoBERTa from %s ...", DISTILROBERTA_MODEL_DIR)
-    distilroberta_service = DistilRoBERTaService(DISTILROBERTA_MODEL_DIR)
-    logger.info("DistilRoBERTa loaded successfully.")
+    model_manager = ModelManager()
+    model_manager.initialize_models()
 
     yield  # App is running
 
     # Cleanup
-    scratch_service = None
-    distilroberta_service = None
+    model_manager = None
     logger.info("Models unloaded.")
 
 
@@ -86,6 +72,5 @@ async def health_check() -> dict[str, str]:
     """Health check endpoint."""
     return {
         "status": "ok",
-        "scratch_model": "loaded" if scratch_service else "not loaded",
-        "distilroberta_model": "loaded" if distilroberta_service else "not loaded",
+        "models_loaded": model_manager is not None,
     }

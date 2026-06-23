@@ -28,7 +28,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
-*Note: Make sure you have downloaded the model artifacts into the `models/` directory according to the instructions in the notebooks.*
+*Note: The first startup will take longer as it automatically downloads the models from Hugging Face Hub.*
 
 ### 2. Start the Frontend
 
@@ -41,6 +41,16 @@ yarn dev
 ```
 
 Then open your browser to `http://localhost:5173`.
+
+## Model Storage
+
+Model weights are hosted on Hugging Face Hub:
+- Custom Transformer: [jibinsajujoseph/scratch-transformer](https://huggingface.co/jibinsajujoseph/scratch-transformer)
+- DistilRoBERTa: [jibinsajujoseph/distilroberta-imdb](https://huggingface.co/jibinsajujoseph/distilroberta-imdb)
+
+The application automatically downloads and caches model artifacts on first launch. No manual model download is required.
+
+First startup may take longer while artifacts are downloaded. Subsequent launches use the local Hugging Face cache.
 
 ## Architecture Details
 

@@ -19,15 +19,16 @@ async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
     confidence scores, latency, and attention weights.
     """
     # Import here to avoid circular imports — services are initialized at startup
-    from app.main import distilroberta_service, scratch_service
+    from app.main import model_manager
 
-    if scratch_service is None or distilroberta_service is None:
+    if model_manager is None:
         raise HTTPException(
             status_code=503,
             detail="Models are still loading. Please try again shortly.",
         )
 
     try:
+        scratch_service = model_manager.get_scratch_service()
         scratch_result = scratch_service.predict(request.text)
     except Exception as e:
         raise HTTPException(
@@ -36,6 +37,7 @@ async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
         )
 
     try:
+        distilroberta_service = model_manager.get_distilroberta_service()
         distilroberta_result = distilroberta_service.predict(request.text)
     except Exception as e:
         raise HTTPException(

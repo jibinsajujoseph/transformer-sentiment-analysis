@@ -83,6 +83,7 @@ pytest tests/test_distilroberta.py -v
 backend/
 ├── app/
 │   ├── main.py                     # FastAPI app, CORS, lifespan
+│   ├── config.py                   # Central configuration & HF Repo IDs
 │   ├── schemas.py                  # Pydantic request/response models
 │   ├── api/
 │   │   └── routes.py               # POST /analyze endpoint
@@ -90,6 +91,7 @@ backend/
 │   │   ├── scratch_transformer.py  # Custom PyTorch architecture
 │   │   └── distilroberta.py        # HuggingFace model loader
 │   └── services/
+│       ├── model_manager.py        # HF Hub downloads & initialization
 │       ├── scratch_service.py      # Scratch model inference + attention
 │       └── distilroberta_service.py # DistilRoBERTa inference
 ├── tests/

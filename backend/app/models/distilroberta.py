@@ -19,27 +19,24 @@ from transformers import (
 
 
 def load_distilroberta(
-    model_dir: Path,
+    repo_id: str,
 ) -> tuple[PreTrainedModel, PreTrainedTokenizerFast]:
     """
-    Load the fine-tuned DistilRoBERTa model and tokenizer from disk.
+    Load the fine-tuned DistilRoBERTa model and tokenizer from Hugging Face Hub.
 
     Args:
-        model_dir: Path to the model directory containing config.json,
-                   model.safetensors, and tokenizer/ subdirectory.
+        repo_id: The Hugging Face repository ID (e.g., "jibinsajujoseph/distilroberta-imdb")
 
     Returns:
         Tuple of (model, tokenizer), both ready for inference.
     """
     model = AutoModelForSequenceClassification.from_pretrained(
-        str(model_dir),
-        local_files_only=True,
+        repo_id,
     )
     model.eval()
 
     tokenizer = AutoTokenizer.from_pretrained(
-        str(model_dir / "tokenizer"),
-        local_files_only=True,
+        repo_id,
     )
 
     return model, tokenizer

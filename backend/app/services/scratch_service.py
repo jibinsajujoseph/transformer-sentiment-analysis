@@ -83,25 +83,24 @@ class ScratchTransformerService:
     Initialized once at app startup — holds model and vocab in memory.
     """
 
-    def __init__(self, model_dir: Path) -> None:
+    def __init__(self, config_path: Path, vocab_path: Path, weights_path: Path) -> None:
         """
         Load the model config, vocabulary, and weights from disk.
 
         Args:
-            model_dir: Path to models/scratch-transformer/ containing
-                       model_config.json, vocab.pkl, sentiment_transformer.pt
+            config_path: Path to downloaded model_config.json
+            vocab_path: Path to downloaded vocab.pkl
+            weights_path: Path to downloaded sentiment_transformer.pt
         """
         self.device = torch.device("cpu")
 
         # 1. Load config
-        config_path = model_dir / "model_config.json"
         with open(config_path) as f:
             self.config: dict = json.load(f)
 
         self.max_len: int = self.config["max_len"]
 
         # 2. Load vocabulary
-        vocab_path = model_dir / "vocab.pkl"
         with open(vocab_path, "rb") as f:
             self.vocab: Vocabulary = pickle.load(f)
 
@@ -117,7 +116,6 @@ class ScratchTransformerService:
             dropout=self.config["dropout"],
         )
 
-        weights_path = model_dir / "sentiment_transformer.pt"
         state_dict = torch.load(weights_path, map_location=self.device, weights_only=True)
         self.model.load_state_dict(state_dict)
         self.model.to(self.device)

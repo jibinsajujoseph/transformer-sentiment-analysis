@@ -2,7 +2,7 @@
 Tests for the custom scratch Transformer model.
 
 Validates:
-    1. Config, vocabulary, and weights load successfully
+    1. Config, vocabulary, and weights load successfully via Hugging Face Hub
     2. Model architecture matches the config
     3. Inference on a positive review returns valid output
     4. Inference on a negative review returns valid output
@@ -15,23 +15,43 @@ from pathlib import Path
 
 import pytest
 import torch
+from huggingface_hub import hf_hub_download
 
+from app.config import settings
 from app.models.scratch_transformer import SentimentClassifier
 from app.services.scratch_service import ScratchTransformerService, preprocess
+from app.services.model_manager import ModelManager
 
-# Resolve model directory relative to this test file
-MODEL_DIR = Path(__file__).resolve().parent.parent.parent / "models" / "scratch-transformer"
+
+@pytest.fixture(scope="module")
+def downloaded_paths() -> dict[str, Path]:
+    """Download artifacts once for the test module."""
+    config_path = hf_hub_download(repo_id=settings.SCRATCH_REPO_ID, filename="model_config.json")
+    vocab_path = hf_hub_download(repo_id=settings.SCRATCH_REPO_ID, filename="vocab.pkl")
+    weights_path = hf_hub_download(repo_id=settings.SCRATCH_REPO_ID, filename="sentiment_transformer.pt")
+    return {
+        "config": Path(config_path),
+        "vocab": Path(vocab_path),
+        "weights": Path(weights_path),
+    }
+
+
+@pytest.fixture(scope="module")
+def service(downloaded_paths: dict[str, Path]) -> ScratchTransformerService:
+    """Initialize the service once for inference tests."""
+    return ScratchTransformerService(
+        config_path=downloaded_paths["config"],
+        vocab_path=downloaded_paths["vocab"],
+        weights_path=downloaded_paths["weights"],
+    )
 
 
 class TestModelLoading:
-    """Test that all model artifacts load correctly."""
+    """Test that all model artifacts load correctly from the Hub cache."""
 
-    def test_config_loads(self) -> None:
+    def test_config_loads(self, downloaded_paths: dict[str, Path]) -> None:
         """model_config.json should load and contain required keys."""
-        config_path = MODEL_DIR / "model_config.json"
-        assert config_path.exists(), f"Config not found at {config_path}"
-
-        with open(config_path) as f:
+        with open(downloaded_paths["config"]) as f:
             config = json.load(f)
 
         required_keys = [
@@ -41,12 +61,9 @@ class TestModelLoading:
         for key in required_keys:
             assert key in config, f"Missing key '{key}' in model_config.json"
 
-    def test_vocab_loads(self) -> None:
+    def test_vocab_loads(self, downloaded_paths: dict[str, Path]) -> None:
         """vocab.pkl should load and contain word2idx, idx2word, and size."""
-        vocab_path = MODEL_DIR / "vocab.pkl"
-        assert vocab_path.exists(), f"Vocab not found at {vocab_path}"
-
-        with open(vocab_path, "rb") as f:
+        with open(downloaded_paths["vocab"], "rb") as f:
             vocab = pickle.load(f)
 
         assert hasattr(vocab, "word2idx"), "Vocab missing word2idx"
@@ -54,12 +71,9 @@ class TestModelLoading:
         assert hasattr(vocab, "size"), "Vocab missing size"
         assert vocab.size > 0, "Vocab size should be > 0"
 
-    def test_weights_load(self) -> None:
+    def test_weights_load(self, downloaded_paths: dict[str, Path]) -> None:
         """sentiment_transformer.pt should load as a valid state dict."""
-        weights_path = MODEL_DIR / "sentiment_transformer.pt"
-        assert weights_path.exists(), f"Weights not found at {weights_path}"
-
-        state_dict = torch.load(weights_path, map_location="cpu", weights_only=True)
+        state_dict = torch.load(downloaded_paths["weights"], map_location="cpu", weights_only=True)
         assert isinstance(state_dict, dict), "State dict should be a dict"
         assert len(state_dict) > 0, "State dict should not be empty"
 
@@ -68,8 +82,8 @@ class TestArchitecture:
     """Test that the reconstructed model matches the config."""
 
     @pytest.fixture()
-    def config(self) -> dict:
-        with open(MODEL_DIR / "model_config.json") as f:
+    def config(self, downloaded_paths: dict[str, Path]) -> dict:
+        with open(downloaded_paths["config"]) as f:
             return json.load(f)
 
     def test_model_construction(self, config: dict) -> None:
@@ -100,7 +114,7 @@ class TestArchitecture:
         )
         assert len(model.encoder.blocks) == config["num_blocks"]
 
-    def test_weight_loading_matches(self, config: dict) -> None:
+    def test_weight_loading_matches(self, config: dict, downloaded_paths: dict[str, Path]) -> None:
         """Saved weights should load into the reconstructed model."""
         model = SentimentClassifier(
             vocab_size=config["vocab_size"],
@@ -113,7 +127,7 @@ class TestArchitecture:
             dropout=config["dropout"],
         )
         state_dict = torch.load(
-            MODEL_DIR / "sentiment_transformer.pt",
+            downloaded_paths["weights"],
             map_location="cpu",
             weights_only=True,
         )
@@ -142,11 +156,6 @@ class TestPreprocessing:
 
 class TestInference:
     """Test end-to-end inference via the service."""
-
-    @pytest.fixture(scope="class")
-    def service(self) -> ScratchTransformerService:
-        """Load the service once for all tests in this class."""
-        return ScratchTransformerService(MODEL_DIR)
 
     def test_positive_review(self, service: ScratchTransformerService) -> None:
         """A clearly positive review should return a valid prediction."""

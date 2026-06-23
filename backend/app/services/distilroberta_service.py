@@ -24,16 +24,15 @@ class DistilRoBERTaService:
     Initialized once at app startup — holds model and tokenizer in memory.
     """
 
-    def __init__(self, model_dir: Path) -> None:
+    def __init__(self, repo_id: str) -> None:
         """
         Load the fine-tuned DistilRoBERTa model and tokenizer.
 
         Args:
-            model_dir: Path to models/distilroberta-imdb/ containing
-                       config.json, model.safetensors, and tokenizer/
+            repo_id: The Hugging Face repository ID.
         """
         self.device = torch.device("cpu")
-        self.model, self.tokenizer = load_distilroberta(model_dir)
+        self.model, self.tokenizer = load_distilroberta(repo_id)
         self.model.to(self.device)
         self.model.eval()
 
