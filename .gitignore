@@ -1,31 +1,50 @@
-# macOS
-.DS_Store
-
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-
-# Virtual environments
-venv/
+*.so
 .venv/
+venv/
 env/
 
 # Jupyter
 .ipynb_checkpoints/
 
-# Environment variables
-.env
+# macOS
+.DS_Store
 
-# IDEs
+# VS Code
 .vscode/
-.idea/
 
 # Model artifacts
 *.pt
 *.pth
-*.h5
+*.bin
+*.safetensors
+*.ckpt
+
+# Serialized objects
+*.pkl
+*.joblib
+
+# Archives
+*.zip
+*.tar.gz
 
 # Logs
 *.log
+
+# Environment variables
+.env
+
+# Build artifacts
+dist/
+build/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/

@@ -1,0 +1,113 @@
+.attention-section {
+  padding: 1.5rem;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation-delay: 0.2s; /* Staggered entrance */
+}
+
+.attention-header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.attention-title {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.attention-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.attention-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  line-height: 2;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.attention-token {
+  position: relative;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  cursor: default;
+  transition: all 0.2s ease;
+  font-size: 1.1rem;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5); /* Improve readability on colored backgrounds */
+}
+
+.attention-token:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+/* Tooltip */
+.attention-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: var(--bg-secondary);
+  color: var(--accent-cyan);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-highlight);
+  pointer-events: none;
+  z-index: 20;
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+.attention-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--border-highlight) transparent transparent transparent;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-8px);
+  }
+}
+
+/* Legend */
+.attention-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding-top: 0.5rem;
+}
+
+.legend-gradient {
+  height: 8px;
+  width: 200px;
+  background: linear-gradient(90deg, rgba(129, 140, 248, 0), rgba(129, 140, 248, 0.8));
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
