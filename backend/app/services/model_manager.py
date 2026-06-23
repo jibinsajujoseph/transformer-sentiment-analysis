@@ -5,6 +5,7 @@ Model manager for downloading, caching, and loading models from Hugging Face Hub
 import logging
 from pathlib import Path
 
+# pyrefly: ignore [missing-import]
 from huggingface_hub import hf_hub_download
 
 from app.config import settings
