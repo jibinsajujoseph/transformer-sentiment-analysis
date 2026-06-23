@@ -1,6 +1,6 @@
 # Sentiment Model Arena
 
-A production-quality portfolio project that compares two sentiment analysis models side-by-side: a custom Transformer built from scratch and a fine-tuned DistilRoBERTa model.
+A project that compares two sentiment analysis models side-by-side: a custom Transformer built from scratch and a fine-tuned DistilRoBERTa model.
 
 ## Features
 
@@ -28,7 +28,8 @@ source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
-*Note: The first startup will take longer as it automatically downloads the models from Hugging Face Hub.*
+
+_Note: The first startup will take longer as it automatically downloads the models from Hugging Face Hub._
 
 ### 2. Start the Frontend
 
@@ -45,6 +46,7 @@ Then open your browser to `http://localhost:5173`.
 ## Model Storage
 
 Model weights are hosted on Hugging Face Hub:
+
 - Custom Transformer: [jibinsajujoseph/scratch-transformer](https://huggingface.co/jibinsajujoseph/scratch-transformer)
 - DistilRoBERTa: [jibinsajujoseph/distilroberta-imdb](https://huggingface.co/jibinsajujoseph/distilroberta-imdb)
 
@@ -55,6 +57,7 @@ First startup may take longer while artifacts are downloaded. Subsequent launche
 ## Architecture Details
 
 ### Custom Scratch Transformer
+
 - **Parameters**: ~6.1 Million
 - **Accuracy**: ~81-82% (IMDb test set)
 - **Architecture**: 3 Encoder Blocks, 4 Attention Heads, 256 embedding dimension.
@@ -62,6 +65,7 @@ First startup may take longer while artifacts are downloaded. Subsequent launche
 - **Implementation**: 100% PyTorch primitives (`nn.Linear`, `nn.Embedding`, `nn.LayerNorm`). No pre-built `nn.Transformer` modules.
 
 ### Fine-tuned DistilRoBERTa
+
 - **Parameters**: ~82 Million
 - **Accuracy**: ~92-94% (IMDb test set)
 - **Architecture**: 6 Encoder Blocks, 12 Attention Heads, 768 embedding dimension.
